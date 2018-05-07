@@ -22,10 +22,10 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 try {
-                    new DateTimeDialog(MainActivity.this).DateDialog(textViewDate.getText().toString(), new DateTimeDialog.DateListener() {
+                    new DateDialog(MainActivity.this).DisplayDialog(textViewDate.getText().toString(), new DateDialog.DateListener() {
                         @Override
                         public void onDateSet(String date) {
-                            Toast.makeText(MainActivity.this, date, Toast.LENGTH_SHORT).show();
+                            textViewDate.setText(date);
                         }
 
                         @Override
@@ -43,10 +43,10 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 try {
-                    new DateTimeDialog(MainActivity.this).TimeDialog(textViewTime.getText().toString(), new DateTimeDialog.TimeListener() {
+                    new TimeDialog(MainActivity.this).DisplayDialog(textViewTime.getText().toString(), new TimeDialog.TimeListener() {
                         @Override
                         public void onTimeSet(String time) {
-                            Toast.makeText(MainActivity.this, time, Toast.LENGTH_SHORT).show();
+                            textViewTime.setText(time);
                         }
 
                         @Override
