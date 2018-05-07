@@ -9,6 +9,7 @@ import android.text.TextWatcher;
 import android.view.Gravity;
 import android.view.View;
 import android.view.WindowManager;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
@@ -72,17 +73,7 @@ public class DateDialog extends Dialog {
 
             @Override
             public void onTextChanged(CharSequence charSequence, int start, int count, int after) {
-                ErrorTextView.setVisibility(View.GONE);
-                if (!charSequence.toString().isEmpty()) {
-                    int day = Integer.parseInt(charSequence.toString());
-                    if (day == 0) {
-                        ErrorTextView.setText("Min Date - 01");
-                        ErrorTextView.setVisibility(View.VISIBLE);
-                    } else if (day > 31) {
-                        ErrorTextView.setText("Max Date - 31");
-                        ErrorTextView.setVisibility(View.VISIBLE);
-                    }
-                }
+                validateFields(ErrorTextView, editTextDate, spinnerMonth, editTextYear, null, dateDialog);
             }
 
             @Override
@@ -99,19 +90,7 @@ public class DateDialog extends Dialog {
 
             @Override
             public void onTextChanged(CharSequence charSequence, int start, int count, int after) {
-                ErrorTextView.setVisibility(View.GONE);
-                if (!charSequence.toString().isEmpty()) {
-                    if (charSequence.length() == 4) {
-                        int year = Integer.parseInt(charSequence.toString());
-                        if (year > 2100 || year < 1900) {
-                            ErrorTextView.setText("Min Year - 1900\nMax Year - 2100");
-                            ErrorTextView.setVisibility(View.VISIBLE);
-                        }
-                    } else {
-                        ErrorTextView.setText("Please enter proper year");
-                        ErrorTextView.setVisibility(View.VISIBLE);
-                    }
-                }
+                validateFields(ErrorTextView, editTextDate, spinnerMonth, editTextYear, null, dateDialog);
             }
 
             @Override
@@ -123,45 +102,7 @@ public class DateDialog extends Dialog {
         buttonDateSet.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                ErrorTextView.setVisibility(View.GONE);
-                String day = editTextDate.getText().toString();
-                String month = spinnerMonth.getSelectedItem().toString();
-                String year = editTextYear.getText().toString();
-                if (day.length() == 0) {
-                    ErrorTextView.setText("Please enter Day");
-                    ErrorTextView.setVisibility(View.VISIBLE);
-                } else if (year.length() == 0 || year.length() < 4) {
-                    ErrorTextView.setText("Please enter Year");
-                    ErrorTextView.setVisibility(View.VISIBLE);
-                } else if (Integer.parseInt(day) == 0) {
-                    ErrorTextView.setText("Min Date - 01");
-                    ErrorTextView.setVisibility(View.VISIBLE);
-                } else if (Integer.parseInt(day) > 31) {
-                    ErrorTextView.setText("Max Date - 31");
-                    ErrorTextView.setVisibility(View.VISIBLE);
-                } else if (Integer.parseInt(year) > 2100 || Integer.parseInt(year) < 1900) {
-                    ErrorTextView.setText("Min Year - 1900\nMax Year - 2100");
-                    ErrorTextView.setVisibility(View.VISIBLE);
-                } else {
-
-                    int iYear = Integer.parseInt(year);
-                    int iMonth = spinnerMonth.getSelectedItemPosition();
-                    int iDay = 1;
-
-                    Calendar mycal = new GregorianCalendar(iYear, iMonth, iDay);
-                    int daysInMonth = mycal.getActualMaximum(Calendar.DAY_OF_MONTH);
-
-                    if (daysInMonth < Integer.parseInt(day)) {
-                        ErrorTextView.setText("Max Date in Selected Month - " + daysInMonth);
-                        ErrorTextView.setVisibility(View.VISIBLE);
-                    } else {
-                        if (dateTimeListener != null) {
-                            String string = (day.length() == 1 ? "0" + day : day) + " " + month + " " + year;
-                            dateTimeListener.onDateSet(string);
-                            dateDialog.dismiss();
-                        }
-                    }
-                }
+                validateFields(ErrorTextView, editTextDate, spinnerMonth, editTextYear, dateTimeListener, dateDialog);
             }
         });
         buttonDateCancel.setOnClickListener(new View.OnClickListener() {
@@ -178,6 +119,18 @@ public class DateDialog extends Dialog {
         langAdapter.setDropDownViewResource(R.layout.simple_spinner_dropdown);
         spinnerMonth.setAdapter(langAdapter);
 
+        spinnerMonth.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
+                validateFields(ErrorTextView, editTextDate, spinnerMonth, editTextYear, null, dateDialog);
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> adapterView) {
+
+            }
+        });
+
         String[] strings = InitialDate.split(" ");
         String[] months = context.getResources().getStringArray(R.array.months);
         if (strings.length == 3) {
@@ -189,7 +142,6 @@ public class DateDialog extends Dialog {
                 }
             }
             editTextYear.setText(strings[2]);
-            editTextYear.requestFocus();
         }
 
         dateDialog.setCancelable(false);
@@ -198,6 +150,47 @@ public class DateDialog extends Dialog {
         lp.dimAmount = 0.2f;
         dateDialog.getWindow().setAttributes(lp);
         dateDialog.show();
+    }
+
+    private void validateFields(TextView ErrorTextView, EditText editTextDate, Spinner spinnerMonth, EditText editTextYear, DateListener dateListener, DateDialog dateDialog) {
+        ErrorTextView.setVisibility(View.GONE);
+        String day = editTextDate.getText().toString();
+        String month = spinnerMonth.getSelectedItem().toString();
+        String year = editTextYear.getText().toString();
+        if (day.length() == 0) {
+            ErrorTextView.setText("Please enter Day");
+            ErrorTextView.setVisibility(View.VISIBLE);
+        } else if (Integer.parseInt(day) == 0) {
+            ErrorTextView.setText("Min Date - 01");
+            ErrorTextView.setVisibility(View.VISIBLE);
+        } else if (Integer.parseInt(day) > 31) {
+            ErrorTextView.setText("Max Date - 31");
+            ErrorTextView.setVisibility(View.VISIBLE);
+        } else if (year.length() == 0 || year.length() < 4) {
+            ErrorTextView.setText("Please enter Year");
+            ErrorTextView.setVisibility(View.VISIBLE);
+        } else if (Integer.parseInt(year) > 2100 || Integer.parseInt(year) < 1900) {
+            ErrorTextView.setText("Min Year - 1900\nMax Year - 2100");
+            ErrorTextView.setVisibility(View.VISIBLE);
+        } else {
+            int iYear = Integer.parseInt(year);
+            int iMonth = spinnerMonth.getSelectedItemPosition();
+            int iDay = 1;
+
+            Calendar mycal = new GregorianCalendar(iYear, iMonth, iDay);
+            int daysInMonth = mycal.getActualMaximum(Calendar.DAY_OF_MONTH);
+
+            if (daysInMonth < Integer.parseInt(day)) {
+                ErrorTextView.setText("Max Date in Selected Month - " + daysInMonth);
+                ErrorTextView.setVisibility(View.VISIBLE);
+            } else {
+                if (dateListener != null) {
+                    String string = (day.length() == 1 ? "0" + day : day) + " " + month + " " + year;
+                    dateListener.onDateSet(string);
+                    dateDialog.dismiss();
+                }
+            }
+        }
     }
 
     public void onWindowFocusChanged(boolean hasFocus) {

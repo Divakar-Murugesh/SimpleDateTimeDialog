@@ -43,20 +43,20 @@ public class TimeDialog extends Dialog {
     }
 
     public void DisplayDialog(String InitialTime, final TimeListener timeListener) {
-        final DateDialog dateDialog = new DateDialog(context, R.style.DateTimeDialog);
-        dateDialog.setTitle("");
-        dateDialog.setContentView(R.layout.dialog_time);
+        final TimeDialog timeDialog = new TimeDialog(context, R.style.DateTimeDialog);
+        timeDialog.setTitle("");
+        timeDialog.setContentView(R.layout.dialog_time);
 
-        LinearLayout linearLayoutTime = (LinearLayout) dateDialog.findViewById(R.id.layoutTimeOnly);
+        LinearLayout linearLayoutTime = (LinearLayout) timeDialog.findViewById(R.id.layoutTimeOnly);
 
-        final TextView ErrorTextView = (TextView) dateDialog.findViewById(R.id.errorTextView2);
+        final TextView ErrorTextView = (TextView) timeDialog.findViewById(R.id.errorTextView2);
         ErrorTextView.setVisibility(View.GONE);
 
-        final EditText editTextHour = (EditText) dateDialog.findViewById(R.id.editTextHour);
-        final EditText editTextMinutes = (EditText) dateDialog.findViewById(R.id.editTextMinutes);
+        final EditText editTextHour = (EditText) timeDialog.findViewById(R.id.editTextHour);
+        final EditText editTextMinutes = (EditText) timeDialog.findViewById(R.id.editTextMinutes);
 
-        Button buttonTimeSet = (Button) dateDialog.findViewById(R.id.timeButtonSet);
-        Button buttonTimeCancel = (Button) dateDialog.findViewById(R.id.timeButtonCancel);
+        Button buttonTimeSet = (Button) timeDialog.findViewById(R.id.timeButtonSet);
+        Button buttonTimeCancel = (Button) timeDialog.findViewById(R.id.timeButtonCancel);
 
         editTextHour.addTextChangedListener(new TextWatcher() {
             @Override
@@ -66,14 +66,7 @@ public class TimeDialog extends Dialog {
 
             @Override
             public void onTextChanged(CharSequence charSequence, int start, int count, int after) {
-                ErrorTextView.setVisibility(View.GONE);
-                if (!charSequence.toString().isEmpty()) {
-                    int hours = Integer.parseInt(charSequence.toString());
-                    if (hours > 23) {
-                        ErrorTextView.setText("Max Hours - 23");
-                        ErrorTextView.setVisibility(View.VISIBLE);
-                    }
-                }
+                validateFields(ErrorTextView, editTextHour, editTextMinutes, null, timeDialog);
             }
 
             @Override
@@ -90,14 +83,7 @@ public class TimeDialog extends Dialog {
 
             @Override
             public void onTextChanged(CharSequence charSequence, int start, int count, int after) {
-                ErrorTextView.setVisibility(View.GONE);
-                if (!charSequence.toString().isEmpty()) {
-                    int minutes = Integer.parseInt(charSequence.toString());
-                    if (minutes > 59) {
-                        ErrorTextView.setText("Max Minutes - 59");
-                        ErrorTextView.setVisibility(View.VISIBLE);
-                    }
-                }
+                validateFields(ErrorTextView, editTextHour, editTextMinutes, null, timeDialog);
             }
 
             @Override
@@ -109,39 +95,7 @@ public class TimeDialog extends Dialog {
         buttonTimeSet.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                ErrorTextView.setVisibility(View.GONE);
-                String hours = editTextHour.getText().toString();
-                String minutes = editTextMinutes.getText().toString();
-                if (hours.length() == 0) {
-                    ErrorTextView.setText("Please enter Hours");
-                    ErrorTextView.setVisibility(View.VISIBLE);
-                } else if (minutes.length() == 0) {
-                    ErrorTextView.setText("Please enter Minutes");
-                    ErrorTextView.setVisibility(View.VISIBLE);
-                } else {
-                    if (Integer.parseInt(hours) > 23) {
-                        ErrorTextView.setText("Max Hours - 23");
-                        ErrorTextView.setVisibility(View.VISIBLE);
-                    } else if (Integer.parseInt(minutes) > 59) {
-                        ErrorTextView.setText("Max Minutes - 59");
-                        ErrorTextView.setVisibility(View.VISIBLE);
-                    } else if (Integer.parseInt(hours) == 0 && Integer.parseInt(minutes) == 0) {
-                        ErrorTextView.setText("Please add at least one Minute");
-                        ErrorTextView.setVisibility(View.VISIBLE);
-                    } else {
-                        if (timeListener != null) {
-                            if (hours.length() == 1) {
-                                hours = "0" + hours;
-                            }
-                            if (minutes.length() == 1) {
-                                minutes = "0" + minutes;
-                            }
-                            String time = hours + ":" + minutes;
-                            timeListener.onTimeSet(time);
-                            dateDialog.dismiss();
-                        }
-                    }
-                }
+                validateFields(ErrorTextView, editTextHour, editTextMinutes, timeListener, timeDialog);
             }
         });
         buttonTimeCancel.setOnClickListener(new View.OnClickListener() {
@@ -149,7 +103,7 @@ public class TimeDialog extends Dialog {
             public void onClick(View view) {
                 if (timeListener != null) {
                     timeListener.onTimeCancel();
-                    dateDialog.dismiss();
+                    timeDialog.dismiss();
                 }
             }
         });
@@ -158,15 +112,42 @@ public class TimeDialog extends Dialog {
         if (strings.length == 2) {
             editTextHour.setText(strings[0]);
             editTextMinutes.setText(strings[1]);
-            editTextMinutes.requestFocus();
         }
 
-        dateDialog.setCancelable(false);
-        dateDialog.getWindow().getAttributes().gravity = Gravity.CENTER;
-        WindowManager.LayoutParams lp = dateDialog.getWindow().getAttributes();
+        timeDialog.setCancelable(false);
+        timeDialog.getWindow().getAttributes().gravity = Gravity.CENTER;
+        WindowManager.LayoutParams lp = timeDialog.getWindow().getAttributes();
         lp.dimAmount = 0.2f;
-        dateDialog.getWindow().setAttributes(lp);
-        dateDialog.show();
+        timeDialog.getWindow().setAttributes(lp);
+        timeDialog.show();
+    }
+
+    private void validateFields(TextView ErrorTextView, EditText editTextHour, EditText editTextMinutes, TimeListener timeListener, TimeDialog timeDialog) {
+        ErrorTextView.setVisibility(View.GONE);
+        String hours = editTextHour.getText().toString();
+        String minutes = editTextMinutes.getText().toString();
+        if (hours.length() == 0) {
+            ErrorTextView.setText("Please enter Hours");
+            ErrorTextView.setVisibility(View.VISIBLE);
+        } else if (Integer.parseInt(hours) > 23) {
+            ErrorTextView.setText("Max Hours - 23");
+            ErrorTextView.setVisibility(View.VISIBLE);
+        } else if (minutes.length() == 0) {
+            ErrorTextView.setText("Please enter Minutes");
+            ErrorTextView.setVisibility(View.VISIBLE);
+        } else if (Integer.parseInt(minutes) > 59) {
+            ErrorTextView.setText("Max Minutes - 59");
+            ErrorTextView.setVisibility(View.VISIBLE);
+        } else if (Integer.parseInt(hours) == 0 && Integer.parseInt(minutes) == 0) {
+            ErrorTextView.setText("Please add at least one Minute");
+            ErrorTextView.setVisibility(View.VISIBLE);
+        } else {
+            if (timeListener != null) {
+                String time = (hours.length() == 1 ? "0" + hours : hours) + ":" + (minutes.length() == 1 ? "0" + minutes : minutes);
+                timeListener.onTimeSet(time);
+                timeDialog.dismiss();
+            }
+        }
     }
 
     public void onWindowFocusChanged(boolean hasFocus) {
